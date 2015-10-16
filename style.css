@@ -39,10 +39,28 @@ thead {
 
 td, th {
     padding: 10px;
+	overflow: hidden;
+	white-space: nowrap;
+    transition: max-width 0.75s;
+    transition-timing-function: cubic-bezier(0.65, 0.24, 0.28, 0.77);
 }
 
-tr td:first-child + td {
+th {
+	cursor:pointer;
+}
+
+tr td:first-child + td + td {
 	text-align: right;
+}
+
+tr td:first-child + td, tr td:first-child + td + td,
+tr th:first-child + th, tr th:first-child + th + th {
+    max-width: 80px;
+}
+
+tr td:first-child + td:hover, tr td:first-child + td + td:hover,
+tr th:first-child + th:hover, tr th:first-child + th + th:hover {
+    max-width: 300px;
 }
 
 tr.off {
@@ -65,7 +83,7 @@ table {
 	padding: 0!important;
 	font: inherit;
 	color: inherit;
-	transition: all 0.8s cubic-bezier(0,1.05,.3,.3);
+	transition: all 0.6s cubic-bezier(0,0,0,1);
 }
 
 .copiable:hover, .copiable:focus, .copiable:visited {
@@ -80,5 +98,7 @@ table {
 }
 
 .copiable:active {
-	color: rgba(255, 255, 255, 1);
+	color: rgba(1, 255, 46, 0.61);
+		
 }
+
