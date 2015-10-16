@@ -1,6 +1,18 @@
 <?php
 ini_set("display_errors", 1);
 error_reporting(E_ALL);
+
+$dnsmasqconffile = "/var/www/html/dnsmasq/dnsmasq.conf";
+$dnsmasqleasfile = "/var/www/html/dnsmasq/dnsmasq.leases";
+
+function getFiles() {
+	//always works
+//	exec("scp root@ddwrt:/tmp/dnsmasq.* /var/www/html/dnsmasq/ > /tmp/test.log 2>&1 &");	
+	global $dnsmasqconffile, $dnsmasqleasfile;
+	exec("wget -qO ".$dnsmasqconffile." http://ddwrt/user/dnsmasq.htm >> /tmp/parsednsmasq.log");
+	exec("wget -qO ".$dnsmasqleasfile." http://ddwrt/user/dnsmasql.htm >> /tmp/parsednsmasq.log");
+}
+
 function arr($arr) {
         echo "<pre>";
         print_r($arr);
@@ -47,7 +59,7 @@ function convertArrLeases($el) {
 
 function ping($host)
 {
-        exec(sprintf('fping -c1 -t70  %s', escapeshellarg($host)), $res, $rval);
+        exec(sprintf('fping -t70 -q %s', escapeshellarg($host)), $res, $rval);
         return $rval === 0;
 }
 
@@ -127,14 +139,15 @@ function createFooter() {
 }
 
 //parse dnsmasq.conf file
+getFiles();
 $pattern = "/\=/";
-$res = preg_grep($pattern, file('/var/www/html/dnsmasq/dnsmasq.conf'));
+$res = preg_grep($pattern, file($dnsmasqconffile));
 
 $domain = findToArr($res,"domain")[0];
 $hosts = array_map("convertArr", findToArr($res,"dhcp-host"));
 
 //parse dnsmasq.leases file
-$leases = array_map("convertArrLeases", file('/var/www/html/dnsmasq/dnsmasq.leases'));
+$leases = array_map("convertArrLeases", file($dnsmasqleasfile));
 
 //merge hosts, format and unique them
 $hosts = array_merge($hosts,$leases);
