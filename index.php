@@ -7,10 +7,12 @@ $dnsmasqleasfile = "/var/www/html/dnsmasq/dnsmasq.leases";
 
 function getFiles() {
 	//always works
-//	exec("scp root@ddwrt:/tmp/dnsmasq.* /var/www/html/dnsmasq/ > /tmp/test.log 2>&1 &");	
-	global $dnsmasqconffile, $dnsmasqleasfile;
-	exec("wget -qO ".$dnsmasqconffile." http://ddwrt/user/dnsmasq.htm >> /tmp/parsednsmasq.log");
-	exec("wget -qO ".$dnsmasqleasfile." http://ddwrt/user/dnsmasql.htm >> /tmp/parsednsmasq.log");
+	exec("scp root@ddwrt:/tmp/dnsmasq.* /var/www/html/dnsmasq > /tmp/test.log 2>&1 &");	
+
+	//works if static webpages are kept on router
+	//global $dnsmasqconffile, $dnsmasqleasfile;
+	//exec("wget -qO ".$dnsmasqconffile." http://ddwrt/user/dnsmasq.htm >> /tmp/parsednsmasq.log");
+	//exec("wget -qO ".$dnsmasqleasfile." http://ddwrt/user/dnsmasql.htm >> /tmp/parsednsmasq.log");
 }
 
 function arr($arr) {
@@ -107,13 +109,18 @@ function formatHosts($el) {
 
 function createTable($hosts) {
 	$res="";
-	$res.="<table>";
+	$res.='<table id="leases">';
 	if (isset($hosts[0])) {
 		$res.= "<thead>";
 		$res.= "<tr>";
 		foreach($hosts[0] as $k => $v) {
-			if ($k!="plainIP")
-				$res.= surroundWith("th",$k);
+			if ($k!="plainIP") {
+				if ($k=="IP") {
+					$res.= surroundWith("th class='sort-default' data-sort-method='dotsep'",$k);
+				} else {
+					$res.= surroundWith("th",$k);
+				}
+			}
 		}
 		$res.="</tr>";
 		$res.="</thead>";
@@ -165,6 +172,8 @@ $hosts = unique_multidim_array($hosts,"IP");
 <link rel="stylesheet" href="style.css">
 <link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
 <script src="https://cdn.rawgit.com/zenorocha/clipboard.js/master/dist/clipboard.min.js"></script>
+<script src='/js/tablesort.min.js'></script>
+<script src='/js/tablesort.dotsep.js'></script>
 </head>
 <body><?php
 echo '<div id="wrapper">';
@@ -176,5 +185,6 @@ echo '</div>';
 </body>
 <script type="text/javascript">
 new Clipboard('.copiable');
+new Tablesort(document.getElementById('leases'));
 </script>
 </html>
