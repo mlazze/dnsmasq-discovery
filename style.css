@@ -28,6 +28,7 @@ a:visited {
 }
 
 .title {
+	display: inline-block;
 	font-size: 64px;
 }
 
@@ -102,3 +103,11 @@ table {
 		
 }
 
+.latest {
+	max-width: 200px;
+	display: inline;
+	position: absolute;
+	margin-left: 30px;
+	font-size: 10pt;
+	color: rgba(140, 140, 140, 0.3);
+}

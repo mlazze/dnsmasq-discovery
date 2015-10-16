@@ -65,6 +65,11 @@ function convertArrLeases($el) {
 	return $res;
 }
 
+function getLatestUpdate() {
+	global $dnsmasqleasfile;
+	return "Last Update:<br />".date("F d Y H:i:s", filemtime($dnsmasqleasfile));
+}
+
 function ping($host)
 {
         exec(sprintf('fping -t70 -q %s', escapeshellarg($host)), $res, $rval);
@@ -193,7 +198,8 @@ $hosts = unique_multidim_array($hosts,"IP");
 </head>
 <body><?php
 echo '<div id="wrapper">';
-echo surroundWith('span class="title"',copiable($domain));
+echo surroundWith('div class="title"',copiable($domain));
+echo surroundWith('div class="latest"',getLatestUpdate());
 echo createTable($hosts);
 echo createFooter();
 echo '</div>';
