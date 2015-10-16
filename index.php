@@ -89,6 +89,14 @@ function copiable($text) {
 	return surroundWith('button class="copiable" data-clipboard-text="'.$text.'"',$text);
 }
 
+function findVendorByMac($mac) {
+	$mac = str_replace(' ', '', $mac);
+	$res = exec("macprefixes/getvendorfrommac.sh ".$mac);
+	if ($res=="")
+		return "Unknown";
+	return $res;
+}
+
 function formatHosts($el) {
 	$el["MAC"] = strtoupper($el["MAC"]);
 	if ($el["Lease"]=="0" || $el["Lease"] == "infinite") {
@@ -98,6 +106,7 @@ function formatHosts($el) {
 	}
 	$res = array();
 	$res["MAC"] = copiable($el["MAC"]);
+	$res["Vendor"] = copiable(findVendorByMac($el["MAC"]));
 	$res["Hostname"] = copiable($el["Hostname"]);
 	$res["IP"] = copiable($el["IP"]);
 	$res["Ssh"] = '<a href="ssh://'.$el["Hostname"].'/">Ssh</a>';
