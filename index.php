@@ -4,10 +4,16 @@ error_reporting(E_ALL);
 
 $dnsmasqconffile = "/var/www/html/dnsmasq/dnsmasq.conf";
 $dnsmasqleasfile = "/var/www/html/dnsmasq/dnsmasq.leases";
+$ddwrt = "ddwrt";
+$ddwrtuser = "root";
+$localfiledir = "/var/www/html/dnsmasq/";
+$logfile = "/tmp/skijdomain.log";
+$getvendorscript = "/var/www/html/macprefixes/getvendorfrommac.sh";
 
 function getFiles() {
 	//always works
-	exec("scp root@ddwrt:/tmp/dnsmasq.* /var/www/html/dnsmasq > /tmp/test.log 2>&1 &");	
+	global $ddwrt, $ddwrtuser, $localfiledir, $logfile;
+	exec("scp ".$ddwrtuser."@".$ddwrt.":/tmp/dnsmasq.* ".$localfiledir." > ".$logfile." 2>&1 &");	
 
 	//works if static webpages are kept on router
 	//global $dnsmasqconffile, $dnsmasqleasfile;
@@ -90,8 +96,9 @@ function copiable($text) {
 }
 
 function findVendorByMac($mac) {
+	global $getvendorscript;
 	$mac = str_replace(' ', '', $mac);
-	$res = exec("macprefixes/getvendorfrommac.sh ".$mac);
+	$res = exec($getvendorscript." ".$mac);
 	if ($res=="")
 		return "Unknown";
 	return $res;
@@ -134,8 +141,8 @@ function createTable($hosts) {
 		$res.="</tr>";
 		$res.="</thead>";
 	}
+	$res.="<tbody>";
 	foreach($hosts as $current) {
-		$res.="<tbody>";
 		$up = ping($current["plainIP"]);
 		$res.= "<tr class =".($up ? 'on' : 'off').">";
 		foreach($current as $k => $v) {
@@ -143,8 +150,8 @@ function createTable($hosts) {
 				$res.= surroundWith("td",$v);
                 }
                 $res.= "</tr>";
-		$res.="</tbody>";
 	}
+	$res.="</tbody>";
 	$res.= "</table>";
 	return $res;
 }
