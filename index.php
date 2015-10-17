@@ -9,6 +9,8 @@ $ddwrtuser = "root";
 $localfiledir = "/var/www/html/dnsmasq/";
 $logfile = "/tmp/skijdomain.log";
 $getvendorscript = "/var/www/html/macprefixes/getvendorfrommac.sh";
+$domain = "";
+$hosts = array();
 
 function getFiles() {
 	//always works
@@ -123,9 +125,21 @@ function formatHosts($el) {
 	$res["IP"] = copiable($el["IP"]);
 	$res["Ssh"] = '<a href="ssh://'.$el["Hostname"].'/">Ssh</a>';
         $res["Http"] = '<a href="http://'.$el["Hostname"].'/">Http</a>';
-	$res["Lease"] = $el["Lease"];
+	$res["More"] = isset($el["More"]) ? $el["More"] : "";
 	$res["plainIP"] = $el["IP"];
+
+	//disabled
+	//$res["Lease"] = $el["Lease"];
+
 	return $res;
+}
+
+function addMore($hosts, $ip,$value) {
+	foreach($hosts as $k => $current) {
+		if ($current["IP"]==$ip)
+			$hosts[$k]["More"] = $value;
+	}
+	return $hosts;
 }
 
 function createTable($hosts) {
@@ -166,27 +180,37 @@ function createFooter() {
 
 }
 
-//parse dnsmasq.conf file
-getFiles();
-$pattern = "/\=/";
-$res = preg_grep($pattern, file($dnsmasqconffile));
+function setupTable() {
+	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
 
-$domain = findToArr($res,"domain")[0];
-$hosts = array_map("convertArr", findToArr($res,"dhcp-host"));
+	//parse dnsmasq.conf file
+	getFiles();
+	$pattern = "/\=/";
+	$res = preg_grep($pattern, file($dnsmasqconffile));
+	
+	$domain = findToArr($res,"domain")[0];
+	$hosts = array_map("convertArr", findToArr($res,"dhcp-host"));
+	
+	//parse dnsmasq.leases file
+	$leases = array_map("convertArrLeases", file($dnsmasqleasfile));
+	
+	//merge hosts, format and unique them
+	$hosts = array_merge($hosts,$leases);
+	
+	//addMore
+	//Example: $hosts = addMore($hosts,"192.168.0.3","Mario");
 
-//parse dnsmasq.leases file
-$leases = array_map("convertArrLeases", file($dnsmasqleasfile));
+	$hosts = array_map("formathosts",$hosts);
+	$hosts = unique_multidim_array($hosts,"IP");
+}
 
-//merge hosts, format and unique them
-$hosts = array_merge($hosts,$leases);
-$hosts = array_map("formathosts",$hosts);
-$hosts = unique_multidim_array($hosts,"IP");
 
+setupTable();
 
 ?>
 <html>
 <head>
-<title><?php echo $domain?></title>
+<title><?php echo $domain ?></title>
 <link rel="icon" 
       type="image/ico" 
       href="/img/favicon.ico" />
