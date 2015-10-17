@@ -13,7 +13,7 @@ $getvendorscript = "/var/www/html/macprefixes/getvendorfrommac.sh";
 function getFiles() {
 	//always works
 	global $ddwrt, $ddwrtuser, $localfiledir, $logfile;
-	exec("scp ".$ddwrtuser."@".$ddwrt.":/tmp/dnsmasq.* ".$localfiledir." > ".$logfile." 2>&1 &");	
+	exec("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ".$ddwrtuser."@".$ddwrt.":/tmp/dnsmasq.* ".$localfiledir." > ".$logfile." 2>&1 &");	
 
 	//works if static webpages are kept on router
 	//global $dnsmasqconffile, $dnsmasqleasfile;
