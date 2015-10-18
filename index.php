@@ -142,6 +142,11 @@ function addMore($hosts, $ip,$value) {
 	return $hosts;
 }
 
+function addMoreLink($hosts, $ip, $name, $url) {
+	$link = surroundWith('a href="'.$url.'"',$name);
+	return addMore($hosts, $ip, $link);
+}
+
 function createTable($hosts) {
 	$res="";
 	$res.='<table id="leases">';
@@ -199,6 +204,9 @@ function setupTable() {
 	
 	//addMore
 	//Example: $hosts = addMore($hosts,"192.168.0.3","Mario");
+	//Example: $hosts = addMoreLink($hosts,"192.168.0.3","WebServer","192.168.0.3:80");
+	$hosts = addMoreLink($hosts,"192.168.0.4","NAS","http://192.168.0.4:1024");
+	$hosts = addMoreLink($hosts,"192.168.0.5","Kodi","http://192.168.0.5:3128");
 
 	$hosts = array_map("formathosts",$hosts);
 	$hosts = unique_multidim_array($hosts,"IP");
