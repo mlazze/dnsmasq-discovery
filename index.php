@@ -21,7 +21,7 @@ function getFiles() {
 	//always works
 	global $ddwrt, $ddwrtuser, $localfiledir, $logfile;
 	exec("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ".$ddwrtuser."@".$ddwrt.":/tmp/dnsmasq.* ".$localfiledir." > ".$logfile." 2>&1");	
-
+	exec ("date >> ".$logfile);
 	//works if static webpages are kept on router
 	//global $dnsmasqconffile, $dnsmasqleasfile;
 	//exec("wget -qO ".$dnsmasqconffile." http://ddwrt/user/dnsmasq.htm >> /tmp/parsednsmasq.log");
@@ -74,6 +74,7 @@ function convertArrLeases($el) {
 
 function getLatestUpdate() {
 	global $dnsmasqleasfile;
+	clearstatcache();
 	return "Last Update:<br />".date("F d Y H:i:s", filemtime($dnsmasqleasfile));
 }
 
@@ -190,37 +191,14 @@ function createFooter() {
 
 }
 
-function setupTable() {
+function setupTable($getfiles) {
 	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
 
 	//parse dnsmasq.conf file
-	getFiles();
-	$pattern = "/\=/";
-	$res = preg_grep($pattern, file($dnsmasqconffile));
-	
-	$domain = findToArr($res,"domain")[0];
-	$hosts = array_map("convertArr", findToArr($res,"dhcp-host"));
-	
-	//parse dnsmasq.leases file
-	$leases = array_map("convertArrLeases", file($dnsmasqleasfile));
-	
-	//merge hosts, format and unique them
-	$hosts = array_merge($hosts,$leases);
-	
-	//addMore
-	//Example: $hosts = addMore($hosts,"192.168.0.3","Mario");
-	//Example: $hosts = addMoreLink($hosts,"192.168.0.3","WebServer","192.168.0.3:80");
-	$hosts = addMoreLink($hosts,"192.168.0.4","NAS","http://192.168.0.4:1024");
-	$hosts = addMoreLink($hosts,"192.168.0.5","Kodi","http://192.168.0.5:3128");
+	if ($getfiles)
+		getFiles();
 
-	$hosts = array_map("formathosts",$hosts);
-	$hosts = unique_multidim_array($hosts,"IP");
-}
-
-function setupTableFast() {
-	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
-
-	//parse dnsmasq.conf file
+	
 	$pattern = "/\=/";
 	$res = preg_grep($pattern, file($dnsmasqconffile));
 	
@@ -262,40 +240,25 @@ function printHeader() {
 	</head>
 	';
 }
-function printDivTemp() {
-	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
-	setupTableFast();
 
-	echo '<div id="wrapper" class="temp">';
-	echo surroundWith('div class="title"',copiable($domain));
-	echo surroundWith('div class="latest"',getLatestUpdate());
-	echo createTable($hosts,NULL);
-	echo createFooter();
-	echo '<script type="text/javascript">';
-	echo "document.title = '".$domain."';";
-	echo "new Clipboard('.copiable');";
-	echo "new Tablesort(document.getElementById('leases'));";
-	echo "</script>";
-	echo '</div>';
-
+function printDiv2($getfiles, $ping, $class, $previousclass) {
 	ob_end_flush();
-	flush();
-}
 
-function printDiv() {
-	print '
-	<script type="text/javascript">
-		var fileref=document.querySelector(".temp")
-	        fileref.style.display = "none"
-		
-	</script>';
+	if (isset($previousclass)) {
+		print '
+		<script type="text/javascript">
+			var fileref=document.querySelector(".'.$previousclass.'")
+	        	fileref.style.display = "none"
+		</script>';
+	}
+
 	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
-	setupTable();
+	setupTable($getfiles);
 
-	echo '<div id="wrapper">';
+	echo '<div id="wrapper" class="'.($class?$class:"").'">';
 	echo surroundWith('div class="title"',copiable($domain));
 	echo surroundWith('div class="latest"',getLatestUpdate());
-	echo createTable($hosts,true);
+	echo createTable($hosts,$ping);
 	echo createFooter();
 	echo '<script type="text/javascript">';
 	echo "document.title = '".$domain."';";
@@ -303,6 +266,9 @@ function printDiv() {
 	echo "new Tablesort(document.getElementById('leases'));";
 	echo "</script>";
 	echo '</div>';
+	
+	ob_start();
+	flush();
 
 }
 
@@ -310,8 +276,9 @@ function printDiv() {
 
 printHeader();
 echo "<body>";
-printDivTemp();
-printDiv();
+printDiv2(false,false,"tempWOping",NULL);
+printDiv2(false,true,"tempWping","tempWOping");
+printDiv2(true,true,NULL,"tempWping");
 echo "</body>";
 
 
