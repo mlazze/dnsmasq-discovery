@@ -242,6 +242,10 @@ function printHeader() {
 }
 
 function printDiv2($getfiles, $ping, $class, $previousclass) {
+	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
+
+	if ((!file_exists($dnsmasqconffile)) && (!$getfiles)) return;
+
 	ob_end_flush();
 
 	if (isset($previousclass)) {
@@ -252,7 +256,6 @@ function printDiv2($getfiles, $ping, $class, $previousclass) {
 		</script>';
 	}
 
-	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
 	setupTable($getfiles);
 
 	echo '<div id="wrapper" class="'.($class?$class:"").'">';
