@@ -25,6 +25,7 @@ a:visited {
 	margin: 0 auto;
 	padding: 10px 17px;
 	-webkit-box-shadow: 2px 2px 3px -1px rgba(0,0,0,0.35);
+	transition: all .3s ease .15s;
 }
 
 .title {
