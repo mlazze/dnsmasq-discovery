@@ -16,6 +16,7 @@ $logfile = "/tmp/skijdomain.log";
 $getvendorscript = "/var/www/html/macprefixes/getvendorfrommac.sh";
 $domain = "";
 $hosts = array();
+$tablesprinted=0;
 
 function getFiles() {
 	//always works
@@ -154,8 +155,10 @@ function addMoreLink($hosts, $ip, $name, $url) {
 }
 
 function createTable($hosts,$ping) {
+	global $tablesprinted;
 	$res="";
-	$res.='<table id="leases">';
+	$res.='<table id="leases'.$tablesprinted.'">';
+	$tablesprinted+=1;
 	if (isset($hosts[0])) {
 		$res.= "<thead>";
 		$res.= "<tr>";
@@ -241,7 +244,7 @@ function printHeader() {
 	';
 }
 
-function printDiv2($getfiles, $ping, $class, $previousclass) {
+function printDiv($getfiles, $ping, $class, $previousclass) {
 	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
 
 	if ((!file_exists($dnsmasqconffile)) && (!$getfiles)) return;
@@ -263,11 +266,19 @@ function printDiv2($getfiles, $ping, $class, $previousclass) {
 	echo surroundWith('div class="latest"',getLatestUpdate());
 	echo createTable($hosts,$ping);
 	echo createFooter();
-	echo '<script type="text/javascript">';
-	echo "document.title = '".$domain."';";
-	echo "new Clipboard('.copiable');";
-	echo "new Tablesort(document.getElementById('leases'));";
-	echo "</script>";
+	print 	'<script type="text/javascript">
+				document.title = "'.$domain.'";
+				new Clipboard(".copiable");
+				var l0 = document.getElementById("leases0");
+				var l1 = document.getElementById("leases1");
+				var l2 = document.getElementById("leases2");
+				if (l0 != null)
+ 					new Tablesort(l0);
+				if (l1 != null)
+ 					new Tablesort(l1);
+				if (l2 != null)
+ 					new Tablesort(l2);
+			</script>';
 	echo '</div>';
 	
 	ob_start();
@@ -279,9 +290,9 @@ function printDiv2($getfiles, $ping, $class, $previousclass) {
 
 printHeader();
 echo "<body>";
-printDiv2(false,false,"tempWOping",NULL);
-printDiv2(false,true,"tempWping","tempWOping");
-printDiv2(true,true,NULL,"tempWping");
+printDiv(false,false,"tempWOping",NULL);
+printDiv(false,true,"tempWping","tempWOping");
+printDiv(true,true,NULL,"tempWping");
 echo "</body>";
 
 
