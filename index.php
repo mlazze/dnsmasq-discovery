@@ -17,6 +17,7 @@ $getvendorscript = "/var/www/html/macprefixes/getvendorfrommac.sh";
 $domain = "";
 $hosts = array();
 $tablesprinted=0;
+$braddress=0;
 
 function getFiles() {
 	//always works
@@ -119,7 +120,9 @@ function findVendorByMac($mac) {
 }
 
 function formatHosts($el) {
-	$el["MAC"] = strtoupper($el["MAC"]);
+    global $braddress;
+    
+    $el["MAC"] = strtoupper($el["MAC"]);
 	if ($el["Lease"]=="0" || $el["Lease"] == "infinite") {
 		$el["Lease"] = "Fixed";
 	} else {
@@ -132,6 +135,7 @@ function formatHosts($el) {
 	$res["IP"] = copiable($el["IP"]);
 	$res["Ssh"] = '<a href="ssh://'.$el["Hostname"].'/">Ssh</a>';
         $res["Http"] = '<a href="http://'.$el["Hostname"].'/">Http</a>';
+	$res["WoL"] = surroundWith('a onclick="wol(\''.$braddress.'\',\''.$el["MAC"].'\')"',"WoL");
 	$res["More"] = isset($el["More"]) ? $el["More"] : "";
 	$res["plainIP"] = $el["IP"];
 
@@ -194,8 +198,12 @@ function createFooter() {
 
 }
 
+function getBroadcast($ip, $subnet) {
+    return long2ip(ip2long($ip) | ~ip2long($subnet));
+}
+
 function setupTable($getfiles) {
-	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
+	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile, $braddress;
 
 	//parse dnsmasq.conf file
 	if ($getfiles)
@@ -204,8 +212,9 @@ function setupTable($getfiles) {
 	
 	$pattern = "/\=/";
 	$res = preg_grep($pattern, file($dnsmasqconffile));
-	
 	$domain = findToArr($res,"domain")[0];
+	$temp = explode(",",findToArr($res,"dhcp-range")[0]);
+    $braddress = getBroadcast($temp[1],$temp[3]); 
 	$hosts = array_map("convertArr", findToArr($res,"dhcp-host"));
 	
 	//parse dnsmasq.leases file
@@ -237,6 +246,7 @@ function printHeader() {
 	<link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
 	<script src="https://cdn.rawgit.com/zenorocha/clipboard.js/master/dist/clipboard.min.js"></script>
 	<script src="/js/tablesort.min.js"></script>
+    <script src="/js/other.js"></script>
 	<script src="/js/tablesort.dotsep.js"></script>
 	<script src="/js/pace.min.js"></script>
 	<title>Domain</title>
