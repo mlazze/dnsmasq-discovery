@@ -3,32 +3,19 @@
 @ini_set('output_buffering',0);
 ini_set("display_errors", 1);
 error_reporting(E_ALL);
+include('sqlite.php');
 
 header('Content-Type: text/HTML; charset=utf-8');
 header( 'Content-Encoding: none; ' );
 
-$dnsmasqconffile = "/var/www/html/dnsmasq/dnsmasq.conf";
-$dnsmasqleasfile = "/var/www/html/dnsmasq/dnsmasq.leases";
-$ddwrt = "ddwrt";
-$ddwrtuser = "root";
-$localfiledir = "/var/www/html/dnsmasq/";
 $logfile = "/tmp/skijdomain.log";
 $getvendorscript = "/var/www/html/macprefixes/getvendorfrommac.sh";
 $domain = "";
 $hosts = array();
 $tablesprinted=0;
 $braddress=0;
-
-function getFiles() {
-	//always works
-	global $ddwrt, $ddwrtuser, $localfiledir, $logfile;
-	exec("scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ".$ddwrtuser."@".$ddwrt.":/tmp/dnsmasq.* ".$localfiledir." > ".$logfile." 2>&1");	
-	exec ("date >> ".$logfile);
-	//works if static webpages are kept on router
-	//global $dnsmasqconffile, $dnsmasqleasfile;
-	//exec("wget -qO ".$dnsmasqconffile." http://ddwrt/user/dnsmasq.htm >> /tmp/parsednsmasq.log");
-	//exec("wget -qO ".$dnsmasqleasfile." http://ddwrt/user/dnsmasql.htm >> /tmp/parsednsmasq.log");
-}
+$dblocation='db/clientsPDO.sqlite';
+$latestupdate="";
 
 function arr($arr) {
         echo "<pre>";
@@ -36,69 +23,10 @@ function arr($arr) {
         echo "</pre>";
 }
 
-function findToArr($startingArray, $string) {
-        $res=array();
-        $startingArray = array_map("trim", $startingArray);
-        foreach($startingArray as $current) {
-                $pieces = explode ("=",$current);
-                if ($pieces[0]==$string)
-                        $res[]=$pieces[1];
-        }
-        return $res;
-}
-
-function convertArr($el) {
-	$res = explode(",",$el);
-	$res["MAC"] = $res[0];
-	$res["Hostname"] = $res[1];
-	$res["IP"] = $res[2];
-	$res["Lease"] = $res[3];
-	unset($res[0]);
-	unset($res[1]);
-	unset($res[2]);
-	unset($res[3]);
-	return $res;
-}
-
-function convertArrLeases($el) {
-	$res = explode(" ",$el);
-	$res["MAC"] = $res[1];
-	$res["Hostname"] = $res[3];
-	$res["IP"] = $res[2];
-	$res["Lease"] = $res[0];
-	unset($res[0]);
-	unset($res[1]);
-	unset($res[2]);
-	unset($res[3]);
-	unset($res[4]);
-	return $res;
-}
-
-function getLatestUpdate() {
-	global $dnsmasqleasfile;
-	clearstatcache();
-	return "Last Update:<br />".date("F d Y H:i:s", filemtime($dnsmasqleasfile));
-}
-
 function ping($host)
 {
         exec(sprintf('fping -t70 -q %s', escapeshellarg($host)), $res, $rval);
         return $rval === 0;
-}
-
-function unique_multidim_array($array, $key){
-    $temp_array = array();
-    $i = 0;
-    $key_array = array();
-    
-    foreach($array as $val){
-        if(!in_array($val[$key],$key_array)){
-            $key_array[$i] = $val[$key];
-            $temp_array[$i] = $val;
-        }
-        $i++;
-    }
-    return $temp_array;
 }
 
 function surroundWith($tag, $text) {
@@ -202,26 +130,14 @@ function getBroadcast($ip, $subnet) {
     return long2ip(ip2long($ip) | ~ip2long($subnet));
 }
 
-function setupTable($getfiles) {
-	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile, $braddress;
+function setupTable() {
+	global $dblocation, $domain, $hosts, $braddress, $latestupdate;
 
-	//parse dnsmasq.conf file
-	if ($getfiles)
-		getFiles();
-
-	
-	$pattern = "/\=/";
-	$res = preg_grep($pattern, file($dnsmasqconffile));
-	$domain = findToArr($res,"domain")[0];
-	$temp = explode(",",findToArr($res,"dhcp-range")[0]);
-    $braddress = getBroadcast($temp[1],$temp[3]); 
-	$hosts = array_map("convertArr", findToArr($res,"dhcp-host"));
-	
-	//parse dnsmasq.leases file
-	$leases = array_map("convertArrLeases", file($dnsmasqleasfile));
-	
-	//merge hosts, format and unique them
-	$hosts = array_merge($hosts,$leases);
+    $dbh = PDOopenDB($dblocation);
+    $hosts = PDOget_items($dbh);
+    $domain = PDOget_info($dbh,"domain");
+    $latestupdate = "Last Update:<br />".PDOget_info($dbh,"updated");
+    $braddress = PDOget_info($dbh,"braddress");
 	
 	//addMore
 	//Example: $hosts = addMore($hosts,"192.168.0.3","Mario");
@@ -230,7 +146,6 @@ function setupTable($getfiles) {
 	$hosts = addMoreLink($hosts,"192.168.0.5","Kodi","http://192.168.0.5:3128");
 
 	$hosts = array_map("formathosts",$hosts);
-	$hosts = unique_multidim_array($hosts,"IP");
 }
 
 function printHeader() {
@@ -254,26 +169,23 @@ function printHeader() {
 	';
 }
 
-function printDiv($getfiles, $ping, $class, $previousclass) {
-	global $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
+function printDiv($ping, $class, $previousclass) {
+	global $latestupdate, $dblocation, $dnsmasqconffile, $domain, $hosts, $dnsmasqleasfile;
 
-	if ((!file_exists($dnsmasqconffile)) && (!$getfiles)) return;
-
-	ob_end_flush();
-
+    ob_end_flush();
 	if (isset($previousclass)) {
 		print '
 		<script type="text/javascript">
 			var fileref=document.querySelector(".'.$previousclass.'")
 	        	fileref.style.display = "none"
 		</script>';
-	}
+    }
 
-	setupTable($getfiles);
+	setupTable();
 
 	echo '<div id="wrapper" class="'.($class?$class:"").'">';
 	echo surroundWith('div class="title"',copiable($domain));
-	echo surroundWith('div class="latest"',getLatestUpdate());
+	echo surroundWith('div class="latest"',$latestupdate);
 	echo createTable($hosts,$ping);
 	echo createFooter();
 	print 	'<script type="text/javascript">
@@ -300,9 +212,8 @@ function printDiv($getfiles, $ping, $class, $previousclass) {
 
 printHeader();
 echo "<body>";
-printDiv(false,false,"tempWOping",NULL);
-printDiv(false,true,"tempWping","tempWOping");
-printDiv(true,true,NULL,"tempWping");
+printDiv(false,"tempWOping",NULL);
+printDiv(true,NULL,"tempWOping");
 echo "</body>";
 
 
