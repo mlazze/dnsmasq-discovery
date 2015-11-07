@@ -3,13 +3,14 @@ ini_set("display_errors", 1);
 error_reporting(E_ALL);
 include('sqlite.php');
 
-$dnsmasqconffile = "/var/www/html/dnsmasq/dnsmasq.conf";
-$dnsmasqleasfile = "/var/www/html/dnsmasq/dnsmasq.leases";
+$basedir = "/var/www/html/";
+$dnsmasqconffile = $basedir."dnsmasq/dnsmasq.conf";
+$dnsmasqleasfile = $basedir."dnsmasq/dnsmasq.leases";
 $ddwrt = "ddwrt";
 $ddwrtuser = "root";
-$localfiledir = "/var/www/html/dnsmasq/";
+$localfiledir = $basedir."dnsmasq/";
 $logfile = "/tmp/skijdomain.log";
-$dblocation='db/clientsPDO.sqlite';
+$dblocation=$basedir.'db/clientsPDO.sqlite';
 
 function getFiles() {
 	//always works
@@ -108,7 +109,7 @@ function addToDB() {
 
     //get cuyrrent time
     date_default_timezone_set('Europe/Rome');
-    $date = date('d/m/Y h:i:s a', time());
+    $date = date('d/m/Y H:i:s', time());
 
     $dbh = PDOopenDB($dblocation);
     PDOcreate_tables($dbh);
