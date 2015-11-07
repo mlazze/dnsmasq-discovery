@@ -186,7 +186,7 @@ function printDiv($ping, $class, $previousclass) {
 
 	echo '<div id="wrapper" class="'.($class?$class:"").'">';
 	echo surroundWith('div class="title"',copiable($domain));
-    echo surroundWith('div class="latest"',$latestupdate.'<br/><br/>'.surroundWith('a onclick="update()"',"Force Update"));
+    echo surroundWith('div class="latest"',$latestupdate.'<br/><br/>'.surroundWith('a class="update" onclick="update()"',"Force Update"));
 	echo createTable($hosts,$ping);
 	echo createFooter();
 	print 	'<script type="text/javascript">
