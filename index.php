@@ -9,12 +9,13 @@ header('Content-Type: text/HTML; charset=utf-8');
 header( 'Content-Encoding: none; ' );
 
 $logfile = "/tmp/skijdomain.log";
-$getvendorscript = "/var/www/html/macprefixes/getvendorfrommac.sh";
+$basedir = "/var/www/html/";
+$getvendorscript = $basedir."macprefixes/getvendorfrommac.sh";
 $domain = "";
 $hosts = array();
 $tablesprinted=0;
 $braddress=0;
-$dblocation='db/clientsPDO.sqlite';
+$dblocation=$basedir.'db/clientsPDO.sqlite';
 $latestupdate="";
 
 function arr($arr) {
@@ -185,7 +186,7 @@ function printDiv($ping, $class, $previousclass) {
 
 	echo '<div id="wrapper" class="'.($class?$class:"").'">';
 	echo surroundWith('div class="title"',copiable($domain));
-	echo surroundWith('div class="latest"',$latestupdate);
+    echo surroundWith('div class="latest"',$latestupdate.'<br/><br/>'.surroundWith('a onclick="update()"',"Force Update"));
 	echo createTable($hosts,$ping);
 	echo createFooter();
 	print 	'<script type="text/javascript">
