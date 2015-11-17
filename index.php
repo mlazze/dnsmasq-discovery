@@ -159,8 +159,8 @@ function printHeader() {
 	      href="/img/favicon.ico" />
 	<link rel="stylesheet" href="style.css">
 	<link rel="stylesheet" href="js/pace.css">
-	<link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet" type="text/css">
-	<script src="https://cdn.rawgit.com/zenorocha/clipboard.js/master/dist/clipboard.min.js"></script>
+	<link href="/fonts/inconsolata.css" rel="stylesheet" type="text/css">
+	<script src="/js/clipboard.min.js"></script>
 	<script src="/js/tablesort.min.js"></script>
     <script src="/js/other.js"></script>
 	<script src="/js/tablesort.dotsep.js"></script>
